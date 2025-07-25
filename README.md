@@ -1,76 +1,60 @@
+Of course. Here is a concise, updated README.md that accurately reflects your project's current pipeline and outputs.
+
 LoL Esports Win Predictor - Data Pipeline
-This project contains a data processing pipeline for League of Legends esports match data. It's designed to take raw match history CSVs from sources like Oracle's Elixir, clean the data, and transform it into a structured format suitable for machine learning analysis to predict game outcomes based on draft information.
+This project contains a data processing pipeline for League of Legends esports match data. It's designed to take raw match history CSVs, clean the data, and transform it into a numerical feature set suitable for machine learning.
 
 Project Structure
-The project is organized to separate data, source code, and outputs, which is a best practice for data science projects.
-
-LOL-DRAFT-PROJECT/
+LOL-DRAFT-PREDICTOR/
 ├── data/
-│   ├── processed/      # Output location for cleaned, analysis-ready data
-│   └── raw/            # Place all your raw .csv match history files here
+│   ├── processed/      # Output location for all processed files
+│   └── raw/            # Place all raw .csv match history files here
 ├── src/
-│   └── data_processing.py  # Core Python module with data processing functions
-├── venv/                 # Virtual environment directory (created by you)
-├── .gitignore            # Tells Git which files to ignore (e.g., venv)
-├── README.md             # This file
-├── requirements.txt      # Lists all Python package dependencies
-└── run_pipeline.py       # The main script to execute the entire data pipeline
-
+│   ├── data_processing.py
+│   ├── run_pipeline.py
+│   └── ... (other scripts)
+├── venv/
+├── .gitignore
+├── README.md
+└── requirements.txt
 Setup and Installation
-To get this project running on your local machine, follow these steps.
+Clone the Repository
 
-1. Clone the Repository
+Bash
 
 git clone <your-repository-url>
-cd LOL-DRAFT-PROJECT
+cd LOL-DRAFT-PREDICTOR
+Create and Activate a Virtual Environment
 
-2. Create and Activate a Virtual Environment
-It is highly recommended to use a virtual environment to manage project-specific dependencies.
+Bash
 
 # Create the environment
-python3 -m venv venv
-
-# Activate the environment (for Linux/macOS)
+python -m venv venv
+# Activate on Linux/macOS
 source venv/bin/activate
-
-# For Windows, use:
+# Activate on Windows
 # venv\Scripts\activate
+Install Dependencies
 
-3. Install Dependencies
-Install all the required Python packages using the requirements.txt file.
+Bash
 
 pip install -r requirements.txt
-
 How to Use
-1. Add Raw Data
-Place all your raw League of Legends match data .csv files into the data/raw/ directory. The pipeline will automatically detect and process all CSV files in this folder.
+Add Raw Data
+Place your raw .csv match history files into the data/raw/ directory.
 
-2. Run the Pipeline
-Execute the main script from the project's root directory to start the data processing.
+Run the Pipeline
+Execute the main script from the src directory to start processing.
 
-python3 run_pipeline.py
+Bash
 
-The script will:
+python src/run_pipeline.py
+Pipeline Outputs
+The pipeline processes the raw data and generates several files in the data/processed/ directory:
 
-Find all .csv files in data/raw/.
+all_regions_processed.csv: An intermediate file where each row is a single game from all available leagues. Data is aggregated but still contains text (e.g., team names, champion lists).
 
-Process and aggregate the data into a game-centric format.
+main_regions_processed.csv: Same as above, but filtered to only include major competitive regions (LCK, LPL, LEC, LCS).
 
-Save the final, cleaned dataset as processed_lol_matches.csv in the data/processed/ directory.
+all_regions_ml_features.csv: A model-ready dataset for all regions. All data is numerical, containing features like team win rates and one-hot encoded champion picks/bans.
 
-Pipeline Details
-Input: Raw CSV files containing player-level match data.
-
-Output: A single CSV file where each row represents one game, with columns for:
-
-gameid
-
-winner (Blue or Red)
-
-Blue/Red Team Name
-
-Blue/Red Team Players (list)
-
-Blue/Red Team Champions (list)
-
-Blue/Red Team Bans (list)
+main_regions_ml_features.csv: The final model-ready dataset for main regions only. Use this for training a model focused on top-tier competitive play.
