@@ -96,30 +96,27 @@ def create_ml_features(processed_df: pd.DataFrame) -> pd.DataFrame:
     # --- 1. Create Target Variable ---
     df['winner_is_blue'] = (df['winner'] == 'Blue').astype(int)
 
-    # --- 2. Create Team Win Rate Features ---
-    print("Calculating team win rates...")
-    all_teams_blue = df[['blue_team', 'winner_is_blue']].rename(columns={'blue_team': 'team', 'winner_is_blue': 'won'})
-    all_teams_red = df[['red_team', 'winner_is_blue']].rename(columns={'red_team': 'team', 'winner_is_blue': 'won'})
-    all_teams_red['won'] = 1 - all_teams_red['won']
+    # --- 2. One-Hot Encode Team Names ---
+    print("One-hot encoding team names...")
+    blue_team_dummies = pd.get_dummies(df['blue_team'], prefix='blue_team', dtype=int)
+    red_team_dummies = pd.get_dummies(df['red_team'], prefix='red_team', dtype=int)
     
-    team_games = pd.concat([all_teams_blue, all_teams_red])
-    team_stats = team_games.groupby('team')['won'].agg(['sum', 'count']).rename(columns={'sum': 'wins', 'count': 'games'})
-    team_stats['win_rate'] = team_stats['wins'] / team_stats['games']
-    
-    df = df.merge(team_stats[['win_rate']], left_on='blue_team', right_index=True).rename(columns={'win_rate': 'blue_team_win_rate'})
-    df = df.merge(team_stats[['win_rate']], left_on='red_team', right_index=True).rename(columns={'win_rate': 'red_team_win_rate'})
+    # --- NEW: One-Hot Encode League/Region ---
+    print("One-hot encoding league names...")
+    league_dummies = pd.get_dummies(df['league'], prefix='league', dtype=int)
 
-    # --- 3. One-Hot Encode Champion Picks and Bans (Efficiently) ---
+    # --- 3. One-Hot Encode Patch Number ---
+    print("One-hot encoding patch numbers...")
+    patch_dummies = pd.get_dummies(df['patch'], prefix='patch', dtype=int)
+
+    # --- 4. One-Hot Encode Champion Picks and Bans ---
     print("One-hot encoding champion picks and bans...")
-
     for col in ['blue_champions', 'red_champions', 'blue_bans', 'red_bans']:
         df[col] = df[col].apply(lambda x: eval(x) if isinstance(x, str) else x)
 
     all_champions = set(c for col in ['blue_champions', 'red_champions', 'blue_bans', 'red_bans'] for c_list in df[col] for c in c_list if c is not None)
     
-    # NEW (EFFICIENT) METHOD: Create all new columns as a list of Series first
     new_feature_columns = []
-    
     for champion in all_champions:
         blue_pick_col = df['blue_champions'].apply(lambda picks: 1 if champion in picks else 0)
         blue_pick_col.name = f'blue_pick_{champion}'
@@ -137,21 +134,17 @@ def create_ml_features(processed_df: pd.DataFrame) -> pd.DataFrame:
         red_ban_col.name = f'red_ban_{champion}'
         new_feature_columns.append(red_ban_col)
 
-    # Concatenate all new columns at once
-    features_to_add = pd.concat(new_feature_columns, axis=1)
-    df = pd.concat([df, features_to_add], axis=1)
-
-    # --- 4. Finalize DataFrame ---
+    champion_features = pd.concat(new_feature_columns, axis=1)
+    
+    # --- 5. Finalize DataFrame ---
     print("Finalizing feature set...")
-    columns_to_drop = [
-        'gameid', 'league', 'year', 'patch', 'winner', 'blue_team', 'blue_players', 
-        'blue_champions', 'blue_bans', 'red_team', 'red_players', 'red_champions', 'red_bans'
-    ]
-    features_df = df.drop(columns=columns_to_drop)
+    target_variable = df[['winner_is_blue']]
+    
+    # Combine all engineered features
+    final_df = pd.concat([target_variable, league_dummies, blue_team_dummies, red_team_dummies, patch_dummies, champion_features], axis=1)
     
     print("Feature engineering complete.")
-    return features_df
-
+    return final_df
 
 def save_to_csv(dataframe: pd.DataFrame, output_path: str):
     """

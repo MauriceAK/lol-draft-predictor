@@ -1,60 +1,64 @@
-Of course. Here is a concise, updated README.md that accurately reflects your project's current pipeline and outputs.
+# **LoL Esports Win Predictor - Data & Model Pipeline**
 
-LoL Esports Win Predictor - Data Pipeline
-This project contains a data processing pipeline for League of Legends esports match data. It's designed to take raw match history CSVs, clean the data, and transform it into a numerical feature set suitable for machine learning.
+This project contains a full data-to-model pipeline for League of Legends esports. It processes raw match history, engineers features suitable for machine learning, and trains a predictive model.
 
-Project Structure
+## **Project Structure**
+
+```
 LOL-DRAFT-PREDICTOR/
 ├── data/
-│   ├── processed/      # Output location for all processed files
-│   └── raw/            # Place all raw .csv match history files here
+│   ├── processed/
+│   └── raw/
+├── models/             # Output location for trained model files
 ├── src/
 │   ├── data_processing.py
-│   ├── run_pipeline.py
-│   └── ... (other scripts)
+│   ├── run_pipeline.py     # Main script for data processing
+│   ├── train_model.py      # Main script for model training
+│   └── predict.py        # Script for making predictions
 ├── venv/
 ├── .gitignore
 ├── README.md
 └── requirements.txt
-Setup and Installation
-Clone the Repository
+```
 
-Bash
+## **Setup**
 
-git clone <your-repository-url>
-cd LOL-DRAFT-PREDICTOR
-Create and Activate a Virtual Environment
+1.  **Clone the Repository** and navigate into the directory.
+2.  **Create and Activate a Virtual Environment**
+    ```bash
+    python -m venv venv
+    source venv/bin/activate  # On Windows: venv\Scripts\activate
+    ```
+3.  **Install Dependencies**
+    ```bash
+    pip install -r requirements.txt
+    ```
 
-Bash
+## **How to Use**
 
-# Create the environment
-python -m venv venv
-# Activate on Linux/macOS
-source venv/bin/activate
-# Activate on Windows
-# venv\Scripts\activate
-Install Dependencies
+The project is now a two-step process: first process the data, then train the model.
 
-Bash
+### **Step 1: Process the Data**
 
-pip install -r requirements.txt
-How to Use
-Add Raw Data
-Place your raw .csv match history files into the data/raw/ directory.
+1.  Place your raw `.csv` match history files into the `data/raw/` directory.
+2.  Run the data pipeline script. This will generate the `ml_features.csv` files in `data/processed/`.
 
-Run the Pipeline
-Execute the main script from the src directory to start processing.
+    ```bash
+    python src/run_pipeline.py
+    ```
 
-Bash
+### **Step 2: Train the Model**
 
-python src/run_pipeline.py
-Pipeline Outputs
-The pipeline processes the raw data and generates several files in the data/processed/ directory:
+Once the data is processed, run the training script. This will use the processed data to train an XGBoost model and save it in the `models/` directory.
 
-all_regions_processed.csv: An intermediate file where each row is a single game from all available leagues. Data is aggregated but still contains text (e.g., team names, champion lists).
+```bash
+python src/train_model.py
+```
 
-main_regions_processed.csv: Same as above, but filtered to only include major competitive regions (LCK, LPL, LEC, LCS).
+### **Step 3: Make a Prediction**
 
-all_regions_ml_features.csv: A model-ready dataset for all regions. All data is numerical, containing features like team win rates and one-hot encoded champion picks/bans.
+You can use the `predict.py` script to load the latest model and make a prediction on a sample game.
 
-main_regions_ml_features.csv: The final model-ready dataset for main regions only. Use this for training a model focused on top-tier competitive play.
+```bash
+python src/predict.py
+```
