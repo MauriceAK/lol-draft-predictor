@@ -110,3 +110,213 @@ Accuracy: 0.6351
 weighted avg       0.63      0.64      0.63       518
 
 
+--- Log Entry: 20250725_061049 ---
+Model: lol_win_predictor_20250725_061049.joblib
+Training Data: data/processed/main_regions_ml_features.csv
+Accuracy: 0.6332
+              precision    recall  f1-score   support
+
+           0       0.61      0.57      0.59       238
+           1       0.65      0.69      0.67       280
+
+    accuracy                           0.63       518
+   macro avg       0.63      0.63      0.63       518
+weighted avg       0.63      0.63      0.63       518
+
+
+--- Log Entry: 20250725_061053 ---
+Model: lol_win_predictor_20250725_061053.joblib
+Training Data: data/processed/main_regions_ml_features.csv
+Accuracy: 0.6332
+              precision    recall  f1-score   support
+
+           0       0.61      0.57      0.59       238
+           1       0.65      0.69      0.67       280
+
+    accuracy                           0.63       518
+   macro avg       0.63      0.63      0.63       518
+weighted avg       0.63      0.63      0.63       518
+
+
+--- Log Entry: 20250725_061113 ---
+Model: lol_win_predictor_20250725_061113.joblib
+Training Data: data/processed/main_regions_ml_features.csv
+Accuracy: 0.6351
+              precision    recall  f1-score   support
+
+           0       0.61      0.57      0.59       238
+           1       0.65      0.69      0.67       280
+
+    accuracy                           0.64       518
+   macro avg       0.63      0.63      0.63       518
+weighted avg       0.63      0.64      0.63       518
+
+
+--- Log Entry: 20250725_062040 ---
+Model: lol_win_predictor_20250725_062040.joblib
+Training Data: data/processed/main_regions_ml_features.csv
+Accuracy: 0.9575
+              precision    recall  f1-score   support
+
+           0       0.96      0.95      0.95       238
+           1       0.96      0.96      0.96       280
+
+    accuracy                           0.96       518
+   macro avg       0.96      0.96      0.96       518
+weighted avg       0.96      0.96      0.96       518
+
+
+--- Log Entry: 20250725_062046 ---
+Model: lol_win_predictor_20250725_062046.joblib
+Training Data: data/processed/main_regions_ml_features.csv
+Accuracy: 0.9575
+              precision    recall  f1-score   support
+
+           0       0.96      0.95      0.95       238
+           1       0.96      0.96      0.96       280
+
+    accuracy                           0.96       518
+   macro avg       0.96      0.96      0.96       518
+weighted avg       0.96      0.96      0.96       518
+
+
+--- Log Entry: 20250725_062119 ---
+Model: lol_win_predictor_20250725_062119.joblib
+Training Data: data/processed/main_regions_ml_features.csv
+Accuracy: 0.9575
+              precision    recall  f1-score   support
+
+           0       0.96      0.95      0.95       238
+           1       0.96      0.96      0.96       280
+
+    accuracy                           0.96       518
+   macro avg       0.96      0.96      0.96       518
+weighted avg       0.96      0.96      0.96       518
+
+
+--- Log Entry: 20250725_063833 ---
+Model: lol_win_predictor_20250725_063833.joblib
+Training Data: data/processed/main_regions_ml_features.csv
+Accuracy: 0.9575
+              precision    recall  f1-score   support
+
+           0       0.96      0.95      0.95       238
+           1       0.96      0.96      0.96       280
+
+    accuracy                           0.96       518
+   macro avg       0.96      0.96      0.96       518
+weighted avg       0.96      0.96      0.96       518
+
+
+--- Log Entry: 20250725_064218 ---
+Model: lol_win_predictor_20250725_064218.joblib
+Training Data: data/processed/main_regions_ml_features.csv
+Accuracy: 0.7954
+              precision    recall  f1-score   support
+
+           0       0.84      0.68      0.75       238
+           1       0.77      0.89      0.82       280
+
+    accuracy                           0.80       518
+   macro avg       0.80      0.79      0.79       518
+weighted avg       0.80      0.80      0.79       518
+
+
+--- Log Entry: 20250725_064327 ---
+Model: lol_win_predictor_20250725_064327.joblib
+Training Data: data/processed/main_regions_ml_features.csv
+Accuracy: 0.9575
+              precision    recall  f1-score   support
+
+           0       0.96      0.95      0.95       238
+           1       0.96      0.96      0.96       280
+
+    accuracy                           0.96       518
+   macro avg       0.96      0.96      0.96       518
+weighted avg       0.96      0.96      0.96       518
+
+
+--- Log Entry: 20250725_064421 ---
+Model: lol_win_predictor_20250725_064421.joblib
+Training Data: data/processed/main_regions_ml_features.csv
+Accuracy: 0.7954
+              precision    recall  f1-score   support
+
+           0       0.84      0.68      0.75       238
+           1       0.77      0.89      0.82       280
+
+    accuracy                           0.80       518
+   macro avg       0.80      0.79      0.79       518
+weighted avg       0.80      0.80      0.79       518
+
+
+--- Log Entry: 20250725_065536 ---
+Model: lol_win_predictor_20250725_065536.joblib
+Training Data: data/processed/main_regions_ml_features.csv
+Accuracy: 0.7954
+              precision    recall  f1-score   support
+
+           0       0.84      0.68      0.75       238
+           1       0.77      0.89      0.82       280
+
+    accuracy                           0.80       518
+   macro avg       0.80      0.79      0.79       518
+weighted avg       0.80      0.80      0.79       518
+
+
+--- Log Entry: 20250725_065724 ---
+Model: lol_win_predictor_20250725_065724.joblib
+Training Data: data/processed/main_regions_ml_features.csv
+Accuracy: 0.7954
+              precision    recall  f1-score   support
+
+           0       0.84      0.68      0.75       238
+           1       0.77      0.89      0.82       280
+
+    accuracy                           0.80       518
+   macro avg       0.80      0.79      0.79       518
+weighted avg       0.80      0.80      0.79       518
+
+
+--- Log Entry: 20250725_065802 ---
+Model: lol_win_predictor_20250725_065802.joblib
+Training Data: data/processed/main_regions_ml_features.csv
+Accuracy: 0.7954
+              precision    recall  f1-score   support
+
+           0       0.84      0.68      0.75       238
+           1       0.77      0.89      0.82       280
+
+    accuracy                           0.80       518
+   macro avg       0.80      0.79      0.79       518
+weighted avg       0.80      0.80      0.79       518
+
+
+--- Log Entry: 20250725_070008 ---
+Model: lol_win_predictor_20250725_070008.joblib
+Training Data: data/processed/main_regions_ml_features.csv
+Accuracy: 0.7954
+              precision    recall  f1-score   support
+
+           0       0.84      0.68      0.75       238
+           1       0.77      0.89      0.82       280
+
+    accuracy                           0.80       518
+   macro avg       0.80      0.79      0.79       518
+weighted avg       0.80      0.80      0.79       518
+
+
+--- Log Entry: 20250725_070024 ---
+Model: lol_win_predictor_20250725_070024.joblib
+Training Data: data/processed/main_regions_ml_features.csv
+Accuracy: 0.7954
+              precision    recall  f1-score   support
+
+           0       0.84      0.68      0.75       238
+           1       0.77      0.89      0.82       280
+
+    accuracy                           0.80       518
+   macro avg       0.80      0.79      0.79       518
+weighted avg       0.80      0.80      0.79       518
+
+

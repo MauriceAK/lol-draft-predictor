@@ -1,40 +1,29 @@
 import pandas as pd
 import numpy as np
-from typing import List
-from collections import Counter
+from typing import List, Dict
+from collections import defaultdict
+from sklearn.preprocessing import MultiLabelBinarizer
 
-def process_lol_esports_data(file_paths: List[str], required_columns: List[str]) -> pd.DataFrame:
+def process_raw_data(file_paths: List[str], required_columns: List[str]) -> pd.DataFrame:
     """
-    Processes raw League of Legends esports match data from multiple CSV files.
-    ... (rest of the docstring is unchanged) ...
+    Processes raw, player-level match data into a game-per-row format.
     """
-    print("Starting data processing...")
-
+    print("--- Starting Initial Data Processing ---")
     all_dfs = []
     for file_path in file_paths:
         try:
-            # MODIFIED: Explicitly setting dtype for 'patch' to avoid mixed type warnings
             df = pd.read_csv(file_path, usecols=required_columns, dtype={'patch': str}, low_memory=False)
             all_dfs.append(df)
-            print(f"Successfully loaded and added {file_path}.")
-        except FileNotFoundError:
-            print(f"Warning: The file {file_path} was not found. Skipping.")
-            continue
         except Exception as e:
-            print(f"An error occurred while reading {file_path}: {e}. Skipping.")
+            print(f"Warning: Could not load {file_path}. Error: {e}. Skipping.")
             continue
 
     if not all_dfs:
-        print("Error: No dataframes were loaded. Exiting.")
+        print("Error: No dataframes were loaded.")
         return pd.DataFrame()
 
     combined_df = pd.concat(all_dfs, ignore_index=True)
-    print(f"Combined all files. Total raw rows: {len(combined_df)}")
-
     combined_df = combined_df[combined_df['datacompleteness'] == 'complete'].copy()
-    print(f"Filtered for complete data. Remaining rows: {len(combined_df)}")
-    
-    # Convert 'result' to numeric for aggregation
     combined_df['result'] = pd.to_numeric(combined_df['result'], errors='coerce')
 
     print("Aggregating player data into team data...")
@@ -45,15 +34,14 @@ def process_lol_esports_data(file_paths: List[str], required_columns: List[str])
         team=('teamname', 'first'),
         players=('playername', list),
         champions=('champion', list),
-        ban1=('ban1', 'first'),
-        ban2=('ban2', 'first'),
-        ban3=('ban3', 'first'),
-        ban4=('ban4', 'first'),
-        ban5=('ban5', 'first'),
+        ban1=('ban1', 'first'), ban2=('ban2', 'first'), ban3=('ban3', 'first'),
+        ban4=('ban4', 'first'), ban5=('ban5', 'first'),
         result=('result', 'first')
     ).reset_index()
 
-    aggregated_df['bans'] = aggregated_df[['ban1', 'ban2', 'ban3', 'ban4', 'ban5']].values.tolist()
+    aggregated_df['bans'] = aggregated_df[['ban1', 'ban2', 'ban3', 'ban4', 'ban5']].apply(
+        lambda x: [b for b in x if pd.notna(b)], axis=1
+    )
     aggregated_df = aggregated_df.drop(columns=['ban1', 'ban2', 'ban3', 'ban4', 'ban5'])
 
     print("Pivoting data to have one row per game...")
@@ -68,94 +56,161 @@ def process_lol_esports_data(file_paths: List[str], required_columns: List[str])
         red_team_data.drop(columns=['side', 'red_league', 'red_year', 'red_patch']),
         on='gameid'
     )
-    processed_df.rename(columns={
-        'blue_league': 'league',
-        'blue_year': 'year',
-        'blue_patch': 'patch'
-    }, inplace=True)
-
+    processed_df.rename(columns={'blue_league': 'league', 'blue_year': 'year', 'blue_patch': 'patch'}, inplace=True)
     processed_df['winner'] = np.where(processed_df['blue_result'] == 1, 'Blue', 'Red')
 
     final_columns = [
         'gameid', 'league', 'year', 'patch', 'winner', 'blue_team', 'blue_players', 
         'blue_champions', 'blue_bans', 'red_team', 'red_players', 'red_champions', 'red_bans'
     ]
-    processed_df = processed_df.reindex(columns=final_columns)
+    
+    for col in ['blue_players', 'blue_champions', 'blue_bans', 'red_players', 'red_champions', 'red_bans']:
+        processed_df[col] = processed_df[col].apply(lambda x: eval(x) if isinstance(x, str) else x)
+        processed_df[col] = processed_df[col].apply(lambda lst: [item for item in lst if pd.notna(item)])
 
-    print("Data processing complete.")
-    return processed_df
+    print("Initial data processing complete.")
+    return processed_df.reindex(columns=final_columns)
+
+
+def _precompute_stats(df: pd.DataFrame) -> Dict:
+    """
+    Pre-computes historical statistics on a per-patch basis to be used for point-in-time feature creation.
+    """
+    print("Pre-computing historical statistics per patch...")
+    
+    stats = {
+        'team_wins_per_patch': defaultdict(lambda: defaultdict(int)),
+        'team_games_per_patch': defaultdict(lambda: defaultdict(int)),
+        'player_champ_wins_per_patch': defaultdict(lambda: defaultdict(lambda: defaultdict(int))),
+        'player_champ_games_per_patch': defaultdict(lambda: defaultdict(lambda: defaultdict(int))),
+        'player_team_champ_wins_per_patch': defaultdict(lambda: defaultdict(lambda: defaultdict(int))),
+        'player_team_champ_games_per_patch': defaultdict(lambda: defaultdict(lambda: defaultdict(int))),
+        'champ_patch_wins': defaultdict(lambda: defaultdict(int)),
+        'champ_patch_games': defaultdict(lambda: defaultdict(int)),
+    }
+
+    for _, row in df.iterrows():
+        patch, blue_won = row['patch'], row['winner'] == 'Blue'
+        
+        stats['team_wins_per_patch'][row['blue_team']][patch] += 1 if blue_won else 0
+        stats['team_games_per_patch'][row['blue_team']][patch] += 1
+        stats['team_wins_per_patch'][row['red_team']][patch] += 0 if blue_won else 1
+        stats['team_games_per_patch'][row['red_team']][patch] += 1
+        
+        for i in range(len(row['blue_players'])):
+            p, c, t = row['blue_players'][i], row['blue_champions'][i], row['blue_team']
+            if p and c:
+                stats['player_champ_wins_per_patch'][p][c][patch] += 1 if blue_won else 0
+                stats['player_champ_games_per_patch'][p][c][patch] += 1
+                stats['player_team_champ_wins_per_patch'][(p, t)][c][patch] += 1 if blue_won else 0
+                stats['player_team_champ_games_per_patch'][(p, t)][c][patch] += 1
+        
+        for i in range(len(row['red_players'])):
+            p, c, t = row['red_players'][i], row['red_champions'][i], row['red_team']
+            if p and c:
+                stats['player_champ_wins_per_patch'][p][c][patch] += 0 if blue_won else 1
+                stats['player_champ_games_per_patch'][p][c][patch] += 1
+                stats['player_team_champ_wins_per_patch'][(p, t)][c][patch] += 0 if blue_won else 1
+                stats['player_team_champ_games_per_patch'][(p, t)][c][patch] += 1
+
+        for c in row['blue_champions']:
+            if c:
+                stats['champ_patch_wins'][c][patch] += 1 if blue_won else 0
+                stats['champ_patch_games'][c][patch] += 1
+        for c in row['red_champions']:
+            if c:
+                stats['champ_patch_wins'][c][patch] += 0 if blue_won else 1
+                stats['champ_patch_games'][c][patch] += 1
+
+    print("Finished pre-computing stats.")
+    return stats
 
 def create_ml_features(processed_df: pd.DataFrame) -> pd.DataFrame:
     """
-    Engineers features from processed data to create a model-ready dataset.
+    Engineers features from processed data, including advanced point-in-time stats to prevent data leakage.
     """
-    print("\nStarting feature engineering for machine learning...")
+    print("\nStarting advanced feature engineering...")
     
-    df = processed_df.copy()
+    df = processed_df.copy().sort_values(by=['year', 'patch']).reset_index(drop=True)
+    patches = sorted(df['patch'].unique())
     
-    # --- 1. Create Target Variable ---
-    df['winner_is_blue'] = (df['winner'] == 'Blue').astype(int)
+    historical_stats = _precompute_stats(df)
+    new_features_list = []
 
-    # --- 2. One-Hot Encode Team Names ---
-    print("One-hot encoding team names...")
-    blue_team_dummies = pd.get_dummies(df['blue_team'], prefix='blue_team', dtype=int)
-    red_team_dummies = pd.get_dummies(df['red_team'], prefix='red_team', dtype=int)
-    
-    # --- NEW: One-Hot Encode League/Region ---
-    print("One-hot encoding league names...")
-    league_dummies = pd.get_dummies(df['league'], prefix='league', dtype=int)
-
-    # --- 3. One-Hot Encode Patch Number ---
-    print("One-hot encoding patch numbers...")
-    patch_dummies = pd.get_dummies(df['patch'], prefix='patch', dtype=int)
-
-    # --- 4. One-Hot Encode Champion Picks and Bans ---
-    print("One-hot encoding champion picks and bans...")
-    for col in ['blue_champions', 'red_champions', 'blue_bans', 'red_bans']:
-        df[col] = df[col].apply(lambda x: eval(x) if isinstance(x, str) else x)
-
-    all_champions = set(c for col in ['blue_champions', 'red_champions', 'blue_bans', 'red_bans'] for c_list in df[col] for c in c_list if c is not None)
-    
-    new_feature_columns = []
-    for champion in all_champions:
-        blue_pick_col = df['blue_champions'].apply(lambda picks: 1 if champion in picks else 0)
-        blue_pick_col.name = f'blue_pick_{champion}'
-        new_feature_columns.append(blue_pick_col)
-
-        red_pick_col = df['red_champions'].apply(lambda picks: 1 if champion in picks else 0)
-        red_pick_col.name = f'red_pick_{champion}'
-        new_feature_columns.append(red_pick_col)
+    print("Generating point-in-time features for each game...")
+    for index, row in df.iterrows():
+        current_patch_index = patches.index(row['patch'])
+        past_patches = patches[:current_patch_index]
         
-        blue_ban_col = df['blue_bans'].apply(lambda bans: 1 if champion in bans else 0)
-        blue_ban_col.name = f'blue_ban_{champion}'
-        new_feature_columns.append(blue_ban_col)
+        game_features = {}
+        
+        # Team winrate over last 3 patches (form)
+        form_patches = patches[max(0, current_patch_index - 3) : current_patch_index]
+        for side in ['blue', 'red']:
+            team = row[f'{side}_team']
+            wins = sum(historical_stats['team_wins_per_patch'][team].get(p, 0) for p in form_patches)
+            games = sum(historical_stats['team_games_per_patch'][team].get(p, 0) for p in form_patches)
+            game_features[f'{side}_team_winrate_form'] = wins / games if games > 5 else 0.5
 
-        red_ban_col = df['red_bans'].apply(lambda bans: 1 if champion in bans else 0)
-        red_ban_col.name = f'red_ban_{champion}'
-        new_feature_columns.append(red_ban_col)
+        # Player and Champion specific winrates (using all past data)
+        for side in ['blue', 'red']:
+            for i in range(len(row[f'{side}_players'])):
+                p, c, t = row[f'{side}_players'][i], row[f'{side}_champions'][i], row[f'{side}_team']
+                
+                p_c_wins = sum(historical_stats['player_champ_wins_per_patch'][p][c].get(p_patch, 0) for p_patch in past_patches)
+                p_c_games = sum(historical_stats['player_champ_games_per_patch'][p][c].get(p_patch, 0) for p_patch in past_patches)
+                game_features[f'{side}_p{i+1}_champ_wr'] = p_c_wins / p_c_games if p_c_games > 3 else 0.5
+                
+                p_t_c_wins = sum(historical_stats['player_team_champ_wins_per_patch'][(p, t)][c].get(p_patch, 0) for p_patch in past_patches)
+                p_t_c_games = sum(historical_stats['player_team_champ_games_per_patch'][(p, t)][c].get(p_patch, 0) for p_patch in past_patches)
+                game_features[f'{side}_p{i+1}_team_champ_wr'] = p_t_c_wins / p_t_c_games if p_t_c_games > 2 else 0.5
+        
+        # --- DATA LEAK FIX ---
+        # Champion winrate on current patch, excluding the current game's result
+        for side in ['blue', 'red']:
+            for i, c in enumerate(row[f'{side}_champions']):
+                # Get total stats for the champion on this patch
+                total_wins = historical_stats['champ_patch_wins'][c].get(row['patch'], 0)
+                total_games = historical_stats['champ_patch_games'][c].get(row['patch'], 0)
+                
+                # Determine if the champion in *this* game won
+                this_game_won = (side == 'blue' and row['winner'] == 'Blue') or \
+                                (side == 'red' and row['winner'] == 'Red')
+                
+                # Subtract this game's outcome from the totals
+                wins_excluding_this_game = total_wins - 1 if this_game_won else total_wins
+                games_excluding_this_game = total_games - 1
+                
+                # Calculate win rate based on other games
+                game_features[f'{side}_c{i+1}_patch_wr'] = wins_excluding_this_game / games_excluding_this_game if games_excluding_this_game > 0 else 0.5
 
-    champion_features = pd.concat(new_feature_columns, axis=1)
-    
-    # --- 5. Finalize DataFrame ---
-    print("Finalizing feature set...")
+        new_features_list.append(game_features)
+
+    new_features_df = pd.DataFrame(new_features_list, index=df.index)
+
+    print("One-hot encoding base features...")
+    df['winner_is_blue'] = (df['winner'] == 'Blue').astype(int)
     target_variable = df[['winner_is_blue']]
     
-    # Combine all engineered features
-    final_df = pd.concat([target_variable, league_dummies, blue_team_dummies, red_team_dummies, patch_dummies, champion_features], axis=1)
+    blue_team_dummies = pd.get_dummies(df['blue_team'], prefix='blue_team', dtype=int)
+    red_team_dummies = pd.get_dummies(df['red_team'], prefix='red_team', dtype=int)
+    league_dummies = pd.get_dummies(df['league'], prefix='league', dtype=int)
     
-    print("Feature engineering complete.")
+    mlb = MultiLabelBinarizer()
+    blue_pick_features = pd.DataFrame(mlb.fit_transform(df['blue_champions']), columns=[f'blue_pick_{cls}' for cls in mlb.classes_], index=df.index)
+    red_pick_features = pd.DataFrame(mlb.fit_transform(df['red_champions']), columns=[f'red_pick_{cls}' for cls in mlb.classes_], index=df.index)
+    blue_ban_features = pd.DataFrame(mlb.fit_transform(df['blue_bans']), columns=[f'blue_ban_{cls}' for cls in mlb.classes_], index=df.index)
+    red_ban_features = pd.DataFrame(mlb.fit_transform(df['red_bans']), columns=[f'red_ban_{cls}' for cls in mlb.classes_], index=df.index)
+
+    print("Finalizing feature set...")
+    final_df = pd.concat([
+        target_variable, new_features_df, league_dummies, blue_team_dummies, 
+        red_team_dummies, blue_pick_features, red_pick_features,
+        blue_ban_features, red_ban_features
+    ], axis=1)
+    
+    # Drop columns with all zero values, which can happen with sparse one-hot encoding
+    final_df = final_df.loc[:, (final_df != 0).any(axis=0)]
+    
+    print("Advanced feature engineering complete.")
     return final_df
-
-def save_to_csv(dataframe: pd.DataFrame, output_path: str):
-    """
-    Saves a pandas DataFrame to a CSV file.
-    ... (rest of the docstring is unchanged) ...
-    """
-    if dataframe.empty:
-        print("Dataframe is empty. Nothing to save.")
-        return
-
-    try:
-        dataframe.to_csv(output_path, index=False)
-    except Exception as e:
-        print(f"An error occurred while saving the file: {e}")
