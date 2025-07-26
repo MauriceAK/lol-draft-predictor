@@ -8,7 +8,7 @@ if __name__ == '__main__':
     # The patch number is now just a string, not a one-hot encoded feature
     game_to_predict = {
         'league': 'LCK',
-        'patch': '14.14', # IMPORTANT: Must be a patch that exists in your historical data
+        'patch': '15.14', # IMPORTANT: Must be a patch that exists in your historical data
         'blue_team': 'T1',
         'red_team': 'Gen.G',
         'blue_players': ['Zeus', 'Oner', 'Faker', 'Gumayusi', 'Keria'],
