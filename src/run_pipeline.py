@@ -53,7 +53,7 @@ def main(raw_dir, processed_dir):
 
     # --- Step 3: Filter for Main Regions and Create ML Features ---
     print("\n--- Creating ML Features for Main Regions ---")
-    main_regions = ['LCK', 'LPL', 'LEC', 'LCS']
+    main_regions = ['LCK', 'LPL', 'LEC', 'LCS', 'LAT N', 'LAT S', "MSI", "WLDs", "EWC"]
     main_regions_data = processed_data[processed_data['league'].isin(main_regions)].copy()
     
     if not main_regions_data.empty:

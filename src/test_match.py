@@ -9,10 +9,10 @@ if __name__ == '__main__':
     game_to_predict = {
         'league': 'LCK',
         'patch': '14.14', # IMPORTANT: Must be a patch that exists in your historical data
-        'blue_team': 'T1',
-        'red_team': 'Gen.G',
-        'blue_players': ['Zeus', 'Oner', 'Faker', 'Gumayusi', 'Keria'],
-        'red_players': ['Kiin', 'Canyon', 'Chovy', 'Peyz', 'Lehends'],
+        'blue_team': 'FLY FAM',
+        'red_team': 'T1',
+        'blue_players': ['Zamudo', 'Will', 'Faker', 'Gumayusi', 'Keria'],
+        'red_players': ['Kiin', 'Canyon', 'Chovy', 'Ruler', 'Lehends'],
         'blue_champions': ['Jayce', 'Xayah', 'Azir', 'Sejuani', 'Rakan'],
         'blue_bans': ['Hwei', 'Aurora', 'Senna', 'Xin Zhao', 'Taliyah'],
         'red_champions': ['K\'Sante', 'Lucian', 'Twisted Fate', 'Skarner', 'Braum'],
