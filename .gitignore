@@ -7,5 +7,4 @@ __pycache__/
 .vscode/
 *.pkl
 *.wal
-*.txt
 .duckdb
