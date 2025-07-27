@@ -1,0 +1,7 @@
+{
+  "patch":       "15.14",
+  "blue_team":   "T1",
+  "red_team":    "Gen.G",
+  "red_picks":  ["Sion", "Xin Zhao", "Ryze", "Aphelios", "Thresh"],
+  "blue_picks":   ["Renekton", "Trundle", "Orianna", "Jhin", "Thresh"]
+}

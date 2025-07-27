@@ -1,4 +1,11 @@
 venv/
+data/*.csv
+data/*.duckdb
 __pycache__/
-*.pyc
-data/
+*.py[cod]
+.env
+.vscode/
+*.pkl
+*.wal
+*.txt
+.duckdb
