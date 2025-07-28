@@ -1,40 +1,63 @@
--- scripts/create_match_stats.sql
+-- scripts/sql/create_mvp_view.sql
 
-DROP TABLE IF EXISTS match_picks;
+-- Drop the view if it exists to ensure a clean rebuild
+DROP VIEW IF EXISTS match_picks_with_opponents;
 
-CREATE TABLE match_picks AS
+-- This view creates a single row for each team's perspective in a match,
+-- including the opponent's champion picks and player IDs.
+CREATE VIEW match_picks_with_opponents AS
+WITH match_teams AS (
+    SELECT
+        gameid,
+        MIN(teamid) AS team1_id,
+        MAX(teamid) AS team2_id
+    FROM raw_player_stats
+    GROUP BY gameid
+),
+game_level_data AS (
+    SELECT
+        p.gameid,
+        p.date AS game_date,
+        p.patch,
+        p.side,
+        p.teamid,
+        MAX(CASE WHEN p.position = 'top' THEN p.playerid END) AS player1_id,
+        MAX(CASE WHEN p.position = 'jng' THEN p.playerid END) AS player2_id,
+        MAX(CASE WHEN p.position = 'mid' THEN p.playerid END) AS player3_id,
+        MAX(CASE WHEN p.position = 'bot' THEN p.playerid END) AS player4_id,
+        MAX(CASE WHEN p.position = 'sup' THEN p.playerid END) AS player5_id,
+        MAX(CASE WHEN p.position = 'top' THEN p.champion END) AS pick1,
+        MAX(CASE WHEN p.position = 'jng' THEN p.champion END) AS pick2,
+        MAX(CASE WHEN p.position = 'mid' THEN p.champion END) AS pick3,
+        MAX(CASE WHEN p.position = 'bot' THEN p.champion END) AS pick4,
+        MAX(CASE WHEN p.position = 'sup' THEN p.champion END) AS pick5,
+        MAX(p.result) AS label
+    FROM raw_player_stats p
+    GROUP BY p.gameid, p.date, p.patch, p.side, p.teamid
+)
+-- Union the perspectives of team1 and team2
 SELECT
-  t1.gameid       AS match_id,
-  t1.game_date    AS game_date,
-  t1.patch        AS patch,
-  t1.side         AS side,
-  t1.teamid       AS teamid,
-
-  -- Team’s picks, renamed to pick1…pick5
-  t1.pick1        AS pick1,
-  t1.pick2        AS pick2,
-  t1.pick3        AS pick3,
-  t1.pick4        AS pick4,
-  t1.pick5        AS pick5,
-
-  -- Opponent’s picks, renamed to opp_pick1…opp_pick5
-  t2.pick1        AS opp_pick1,
-  t2.pick2        AS opp_pick2,
-  t2.pick3        AS opp_pick3,
-  t2.pick4        AS opp_pick4,
-  t2.pick5        AS opp_pick5,
-
-  -- Team’s players, so we can join player–champ stats
-  t1.player1_id   AS player1_id,
-  t1.player2_id   AS player2_id,
-  t1.player3_id   AS player3_id,
-  t1.player4_id   AS player4_id,
-  t1.player5_id   AS player5_id,
-
-  -- Label: did Team A win?
-  CASE WHEN t1.label = 1 THEN 1 ELSE 0 END AS label
-
-FROM team_picks t1
-JOIN team_picks t2
-  ON t1.gameid = t2.gameid
- AND t1.teamid < t2.teamid;
+    g.gameid AS match_id,
+    g.game_date,
+    g.patch,
+    g.side,
+    g.teamid,
+    mt.team2_id AS opp_teamid,
+    g.label,
+    g.player1_id, g.player2_id, g.player3_id, g.player4_id, g.player5_id,
+    g.pick1, g.pick2, g.pick3, g.pick4, g.pick5
+FROM game_level_data g
+JOIN match_teams mt ON g.gameid = mt.gameid AND g.teamid = mt.team1_id
+UNION ALL
+SELECT
+    g.gameid AS match_id,
+    g.game_date,
+    g.patch,
+    g.side,
+    g.teamid,
+    mt.team1_id AS opp_teamid,
+    g.label,
+    g.player1_id, g.player2_id, g.player3_id, g.player4_id, g.player5_id,
+    g.pick1, g.pick2, g.pick3, g.pick4, g.pick5
+FROM game_level_data g
+JOIN match_teams mt ON g.gameid = mt.gameid AND g.teamid = mt.team2_id;

@@ -1,31 +1,28 @@
--- scripts/create_team_form.sql
+-- FILE: scripts/sql/create_team_form.sql
+-- FIX 1: Changed window from 5 to 10 preceding games.
+-- FIX 2: Used COALESCE to provide default values for teams with no prior games, preventing NULLs/NaNs.
+
 DROP TABLE IF EXISTS team_form;
 
 CREATE TABLE team_form AS
 SELECT
   match_id,
   teamid,
+  game_date,
 
-  -- last 5‐game win%
-  AVG(label) OVER win_wind         AS win_rate_last5,
-
-  -- last 5‐game avg kills/assists/deaths
-  AVG(team_kills15)   OVER kills_wind    AS avg_kills15_last5,
-  AVG(team_assists15) OVER assists_wind  AS avg_assists15_last5,
-  AVG(team_deaths15)  OVER deaths_wind   AS avg_deaths15_last5,
-
-  -- last 5‐game avg diffs
-  AVG(avg_csdiff15)   OVER csdiff_wind   AS avg_csdiff15_last5,
-  AVG(avg_golddiff15) OVER golddiff_wind AS avg_golddiff15_last5,
-  AVG(avg_xpdiff15)   OVER xpdiff_wind   AS avg_xpdiff15_last5
+  -- Use COALESCE to handle cases where there are no preceding games.
+  -- Default win rate to 0.5 (neutral) and others to 0.0.
+  COALESCE(AVG(label) OVER win_wind, 0.5) AS win_rate_last10,
+  COALESCE(AVG(team_kills15) OVER form_wind, 0.0) AS avg_kills15_last10,
+  COALESCE(AVG(team_assists15) OVER form_wind, 0.0) AS avg_assists15_last10,
+  COALESCE(AVG(team_deaths15) OVER form_wind, 0.0) AS avg_deaths15_last10,
+  COALESCE(AVG(avg_csdiff15) OVER form_wind, 0.0) AS avg_csdiff15_last10,
+  COALESCE(AVG(avg_golddiff15) OVER form_wind, 0.0) AS avg_golddiff15_last10,
+  COALESCE(AVG(avg_xpdiff15) OVER form_wind, 0.0) AS avg_xpdiff15_last10
 
 FROM team_performance
 
+-- Define windows for a 10-game lookback
 WINDOW
-  win_wind       AS (PARTITION BY teamid ORDER BY game_date ROWS BETWEEN 5 PRECEDING AND 1 PRECEDING),
-  kills_wind     AS (PARTITION BY teamid ORDER BY game_date ROWS BETWEEN 5 PRECEDING AND 1 PRECEDING),
-  assists_wind   AS (PARTITION BY teamid ORDER BY game_date ROWS BETWEEN 5 PRECEDING AND 1 PRECEDING),
-  deaths_wind    AS (PARTITION BY teamid ORDER BY game_date ROWS BETWEEN 5 PRECEDING AND 1 PRECEDING),
-  csdiff_wind    AS (PARTITION BY teamid ORDER BY game_date ROWS BETWEEN 5 PRECEDING AND 1 PRECEDING),
-  golddiff_wind  AS (PARTITION BY teamid ORDER BY game_date ROWS BETWEEN 5 PRECEDING AND 1 PRECEDING),
-  xpdiff_wind    AS (PARTITION BY teamid ORDER BY game_date ROWS BETWEEN 5 PRECEDING AND 1 PRECEDING);
+  win_wind AS (PARTITION BY teamid ORDER BY game_date ROWS BETWEEN 10 PRECEDING AND 1 PRECEDING),
+  form_wind AS (PARTITION BY teamid ORDER BY game_date ROWS BETWEEN 10 PRECEDING AND 1 PRECEDING);

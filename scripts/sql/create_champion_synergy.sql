@@ -1,4 +1,5 @@
--- scripts/create_champion_synergy.sql
+-- FILE: scripts/sql/create_champion_synergy.sql
+-- FIX: Added a HAVING clause to only include synergies with at least 5 games played.
 
 DROP TABLE IF EXISTS champion_synergy;
 
@@ -17,6 +18,9 @@ WITH team_pairs AS (
 SELECT
   champ1,
   champ2,
-  AVG(combined_result) AS synergy_win_rate
+  AVG(combined_result) AS synergy_win_rate,
+  COUNT(*) AS games_played
 FROM team_pairs
-GROUP BY champ1, champ2;
+GROUP BY champ1, champ2
+-- Only include synergies that have been tested in a reasonable number of games
+HAVING COUNT(*) >= 5;

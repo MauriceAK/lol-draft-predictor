@@ -10,7 +10,7 @@ WITH numbered AS (
     patch,
     side,
     teamid,
-    participantid,
+    playerid,
     champion,
     result,
     ROW_NUMBER() OVER (
@@ -33,11 +33,11 @@ SELECT
   MAX(CASE WHEN slot=4 THEN champion END)       AS pick4,
   MAX(CASE WHEN slot=5 THEN champion END)       AS pick5,
   -- Pivot participant IDs
-  MAX(CASE WHEN slot=1 THEN participantid END)  AS player1_id,
-  MAX(CASE WHEN slot=2 THEN participantid END)  AS player2_id,
-  MAX(CASE WHEN slot=3 THEN participantid END)  AS player3_id,
-  MAX(CASE WHEN slot=4 THEN participantid END)  AS player4_id,
-  MAX(CASE WHEN slot=5 THEN participantid END)  AS player5_id,
+  MAX(CASE WHEN slot=1 THEN playerid END)  AS player1_id,
+  MAX(CASE WHEN slot=2 THEN playerid END)  AS player2_id,
+  MAX(CASE WHEN slot=3 THEN playerid END)  AS player3_id,
+  MAX(CASE WHEN slot=4 THEN playerid END)  AS player4_id,
+  MAX(CASE WHEN slot=5 THEN playerid END)  AS player5_id,
   -- Label (did this team win?)
   MAX(result)                                  AS label
 FROM numbered

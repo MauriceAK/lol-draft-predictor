@@ -1,7 +1,23 @@
 {
-  "patch":       "15.14",
-  "blue_team":   "T1",
-  "red_team":    "Gen.G",
-  "red_picks":  ["Sion", "Xin Zhao", "Ryze", "Aphelios", "Thresh"],
-  "blue_picks":   ["Renekton", "Trundle", "Orianna", "Jhin", "Thresh"]
+  "patch": "15.14",
+  "red_team": {
+    "name": "DRX",
+    "picks": {
+      "top": "Ornn",
+      "jng": "Xin Zhao",
+      "mid": "Taliyah",
+      "bot": "Lucian",
+      "sup": "Nautilus"
+    }
+  },
+  "blue_team": {
+    "name": "DN Freecs",
+    "picks": {
+      "top": "Rumble",
+      "jng": "Nocturne",
+      "mid": "Orianna",
+      "bot": "Zeri",
+      "sup": "Lulu"
+    }
+  }
 }

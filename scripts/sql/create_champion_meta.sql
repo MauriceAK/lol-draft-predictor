@@ -1,11 +1,8 @@
--- scripts/create_champion_meta.sql
+-- FILE: scripts/sql/create_champion_meta.sql
+-- FIX: Added NULLIF to prevent division-by-zero errors.
 
--- 1) Drop old table if it exists
 DROP TABLE IF EXISTS champion_meta;
 
--- 2) For each patch & champion, compute:
---    • win_rate  = avg(result)
---    • pick_rate = count(*) / total_picks_in_patch
 CREATE TABLE champion_meta AS
 WITH per_champ AS (
   SELECT
@@ -27,6 +24,7 @@ SELECT
   pc.patch,
   pc.champion,
   pc.win_rate,
-  (pc.pick_count::DOUBLE / pt.total_picks) AS pick_rate
+  -- Use NULLIF to avoid division by zero if a patch somehow has 0 picks
+  (pc.pick_count::DOUBLE / NULLIF(pt.total_picks, 0)) AS pick_rate
 FROM per_champ pc
 JOIN patch_totals pt USING (patch);
