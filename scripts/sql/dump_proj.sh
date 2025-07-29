@@ -22,9 +22,6 @@ find "$ROOT_DIR" -type f \
   -not -path "/lolpredictor/__pycache__/*" \
   -not -name "*.json" \
   -not -name "*.cpython-312.pyc" \
-  -not -name "*.keras" \
-  -not -name "*.sh" \
-  -not -name "*.png" \
   | while read -r file; do
     echo "=== $file ==="
     cat "$file"

@@ -23,7 +23,8 @@ def main():
         "create_champion_counters.sql",
         "create_player_champion_stats.sql",
         "create_team_performance.sql",
-        "create_team_form.sql"
+        "create_team_form.sql",
+        "create_trueskill_source_view.sql",
     ]
 
     for fn in patterns:

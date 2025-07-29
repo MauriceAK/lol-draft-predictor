@@ -9,6 +9,7 @@ from lolpredictor.etl import load_and_prep_data
 from lolpredictor.model import create_siamese_model
 import config
 import pickle
+import duckdb
 
 def sanitize_maps(maps):
     clean = {}
@@ -16,12 +17,14 @@ def sanitize_maps(maps):
         if isinstance(m, dict):
             d = {}
             for k, v in m.items():
+              
                 # namedtuple → dict
                 if hasattr(v, "_asdict"):
                     d[k] = v._asdict()
                 else:
                     d[k] = v
             clean[name] = d
+   
         # if you ever store DataFrames/Series directly:
         elif isinstance(m, pd.DataFrame):
             clean[name] = m.to_dict(orient="list")
@@ -32,8 +35,49 @@ def sanitize_maps(maps):
 print("Starting data loading and preparation...")
 # This single function now returns both the training data and the maps needed for prediction
 match_df, feature_maps = load_and_prep_data()
-print(f"Loaded {len(match_df)} matches.")
+print(f"Loaded {len(match_df)} total matches.")
 assert len(match_df) > 0, "ETL process failed: No matches were loaded."
+
+# --- NEW: FILTERING FOR MAJOR LEAGUE DATA ---
+print("Filtering for major league matchups (LCS, LCK, LPL, LEC)...")
+
+# Get the raw match data which contains team and opponent IDs
+raw_matches_df = pd.DataFrame(feature_maps['raw_matches'])
+
+# Define the major leagues
+major_leagues = {'LCS', 'LCK', 'LPL', 'LEC', 'LTA S', 'LTA N', 'CBLOL', 'LCP'}
+
+# Connect to the database to get league information for each team
+try:
+    con = duckdb.connect(config.DB_PATH, read_only=True)
+    # This query gets the primary domestic league for each team
+    league_info_df = con.execute("""
+        SELECT DISTINCT teamid, league 
+        FROM raw_player_stats 
+        WHERE league IN ('LCS', 'LCK', 'LPL', 'LEC', 'LTA S', 'LTA N', 'CBLOL', 'LCP')
+    """).df()
+    con.close()
+except Exception as e:
+    print(f"Database connection failed: {e}")
+    # Exit gracefully if the database isn't available
+    exit()
+
+# Map the league to the team and the opponent team in each match
+# The raw_matches_df has columns 'teamid' and 'opp_teamid'
+raw_matches_df = pd.merge(raw_matches_df, league_info_df.rename(columns={'league': 'team_league'}), on='teamid', how='left')
+raw_matches_df = pd.merge(raw_matches_df, league_info_df.rename(columns={'league': 'opp_team_league'}), left_on='opp_teamid', right_on='teamid', how='left')
+
+# Filter for matches where BOTH teams are in a major league
+major_league_matches_df = raw_matches_df.dropna(subset=['team_league', 'opp_team_league'])
+major_league_match_ids = set(major_league_matches_df['match_id'])
+
+# Apply the filter to our main DataFrame used for training
+original_count = len(match_df)
+match_df = match_df[match_df['match_id'].isin(major_league_match_ids)].copy()
+print(f"Filtered from {original_count} to {len(match_df)} matches for model training.")
+assert len(match_df) > 0, "No major league matches found after filtering. Check data and league names."
+# --- END OF NEW SECTION ---
+
 
 # Unpack the feature vectors from the DataFrame into numpy arrays
 X1 = np.array([list(d.values()) for d in match_df['team1_vector']])
@@ -112,4 +156,3 @@ with open(f"{config.MODELS_DIR}/feature_maps.pkl", 'wb') as f:
 with open(f"{config.MODELS_DIR}/feature_names.pkl", 'wb') as f:
     pickle.dump(feature_names, f)
 print("Feature maps and names saved.")
-

@@ -1,4 +1,4 @@
--- scripts/create_team_performance.sql
+-- FILE: scripts/sql/create_team_performance.sql
 DROP TABLE IF EXISTS team_performance;
 
 CREATE TABLE team_performance AS
@@ -7,15 +7,15 @@ SELECT
   tp.teamid,
   tp.game_date,
 
-  -- full-game totals at 15' for each team
-  SUM(rp.killsat15)    AS team_kills15,
-  SUM(rp.assistsat15)  AS team_assists15,
-  SUM(rp.deathsat15)   AS team_deaths15,
+  -- If SUM(killsat15) is NULL (because the data is partial), use 0 instead.
+  COALESCE(SUM(rp.killsat15), 0)    AS team_kills15,
+  COALESCE(SUM(rp.assistsat15), 0)  AS team_assists15,
+  COALESCE(SUM(rp.deathsat15), 0)   AS team_deaths15,
 
-  -- average 15' diffs per team
-  AVG(rp.csdiffat15)   AS avg_csdiff15,
-  AVG(rp.golddiffat15) AS avg_golddiff15,
-  AVG(rp.xpdiffat15)   AS avg_xpdiff15,
+  -- If AVG(golddiffat15) is NULL, use 0.0 instead.
+  COALESCE(AVG(rp.csdiffat15), 0.0)   AS avg_csdiff15,
+  COALESCE(AVG(rp.golddiffat15), 0.0) AS avg_golddiff15,
+  COALESCE(AVG(rp.xpdiffat15), 0.0)   AS avg_xpdiff15,
 
   tp.label
 FROM team_picks tp

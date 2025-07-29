@@ -49,6 +49,6 @@ def create_siamese_model(input_shape):
     stable_optimizer = Adam(learning_rate=0.0001, clipvalue=1.0)
     # --------------------------
 
-    model.compile(optimizer='adam', loss='binary_crossentropy', metrics=['accuracy'])
+    model.compile(optimizer=stable_optimizer, loss='binary_crossentropy', metrics=['accuracy'])
 
     return model

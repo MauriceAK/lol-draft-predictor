@@ -1,23 +1,22 @@
-{
-  "patch": "15.14",
+{"patch": "15.14",
   "red_team": {
-    "name": "DRX",
+    "name": "T1",
     "picks": {
-      "top": "Ornn",
-      "jng": "Xin Zhao",
-      "mid": "Taliyah",
-      "bot": "Lucian",
-      "sup": "Nautilus"
+      "top": "Jayce",
+      "jng": "Sejunai",
+      "mid": "Azir",
+      "bot": "Xayah",
+      "sup": "Rakan"
     }
   },
   "blue_team": {
-    "name": "DN Freecs",
+    "name": "Gen.G",
     "picks": {
-      "top": "Rumble",
-      "jng": "Nocturne",
-      "mid": "Orianna",
-      "bot": "Zeri",
-      "sup": "Lulu"
+      "top": "K'Sante",
+      "jng": "Skarner",
+      "mid": "Twisted Fate",
+      "bot": "Lucian",
+      "sup": "Braum"
     }
   }
 }
